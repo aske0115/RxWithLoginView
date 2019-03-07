@@ -11,12 +11,31 @@ import RxSwift
 import RxCocoa
 
 
-class ViewController: UIViewController {
+class BaseViewController:UIViewController{
+    override func viewDidLoad() {
+        setupUI()
+        bindUI()
+    }
+    
+    func setupUI(){
+        
+    }
+    
+    func bindUI(){
+        
+    }
+    
+}
+
+class ViewController: BaseViewController {
 
     
-    var disposeBag:DisposeBag{
-        return viewModel.disposeBag
-    }
+    lazy var disposeBag:DisposeBag = DisposeBag()
+    
+    
+    private let emailBehavior = BehaviorSubject(value: "")
+    private let passwordBehavior = BehaviorSubject(value: "")
+    
 //    var idFieldSubject:PublishSubject<String>?
 //    var pwFieldSubject:PublishSubject<String>?
     
@@ -28,54 +47,48 @@ class ViewController: UIViewController {
     @IBOutlet weak var loginButton:UIButton!
     
     
-    lazy var viewModel = LoginViewModel()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        bindUI()
         // Do any additional setup after loading the view, typically from a nib.
     }
 
-    //MARK: bind
     
-    private func bindUI(){
-        self.idTextField.rx.text.orEmpty
-            .map(checkEmail)
-            .subscribe(onNext: { [weak self] (b) in
-                guard let `self` = self else { return }
-                if !b{
-                    self.idTextField.backgroundColor = .orange
-                    if(self.idTextField.text!.count == 0) {
-                        self.idTextField.placeholder = "Input EmailAddress"
-                    }
-                }else{
-                    self.idTextField.backgroundColor = .clear
-                }
-            })
-            .disposed(by: disposeBag)
-
-
-        self.pwTextField.rx.text.orEmpty
-            .map(checkPassword)
-            .subscribe(onNext: { [weak self] (b) in
-                guard let `self` = self else { return }
-                if !b{
-                    self.pwTextField.backgroundColor = .orange
-                    if(self.pwTextField.text!.count == 0) {
-                        self.pwTextField.placeholder = "Input Password"
-                    }
-                }else{
-                    self.pwTextField.backgroundColor = .clear
-                }
-            })
-            .disposed(by: disposeBag)
+    override func setupUI() {
+        
     }
     
+    override func bindUI() {
+        self.idTextField.rx.text.orEmpty
+            .bind(to:self.emailBehavior)
+            .disposed(by: disposeBag)
+        
+        self.pwTextField.rx.text.orEmpty
+            .bind(to:self.passwordBehavior)
+            .disposed(by: disposeBag)
+        bindResult()
+    }
+    
+    
+    private func bindResult(){
+        Observable.combineLatest(
+            self.emailBehavior.map(checkEmail),
+            self.passwordBehavior.map(checkPassword)
+            , resultSelector: { $0 && $1})
+            .subscribe(onNext:{ result in
+                self.loginButton.isEnabled = result
+            }).disposed(by: disposeBag)
+    }
     private func checkEmail(_ email:String) -> Bool{
-        return email.contains("@") && email.contains(".")
+        if email.count == 0{
+            self.idTextField.placeholder = "input Email"
+        }
+        return email.count > 0 && email.contains("@") && email.contains(".")
     }
     
     private func checkPassword(_ password:String) -> Bool{
+        if password.count == 0{
+            self.pwTextField.placeholder = "input Password"
+        }
         return password.count > 7
     }
 
