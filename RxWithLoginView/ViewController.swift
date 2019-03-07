@@ -36,6 +36,9 @@ class ViewController: BaseViewController {
     private let emailBehavior = BehaviorSubject(value: "")
     private let passwordBehavior = BehaviorSubject(value: "")
     
+    private let emailValid = BehaviorSubject(value: false)
+    private let passwordValid = BehaviorSubject(value: false)
+    
 //    var idFieldSubject:PublishSubject<String>?
 //    var pwFieldSubject:PublishSubject<String>?
     
@@ -58,41 +61,67 @@ class ViewController: BaseViewController {
     }
     
     override func bindUI() {
+        
+//        self.emailBehavior = self.idTextField.rx.text.orEmpty.asBe
+        
+        bindInput()
+        bindOutput()
+//        self.idTextField.rx.text.orEmpty
+//            .bind(to:self.emailBehavior)
+//            .disposed(by: disposeBag)
+//
+//        self.pwTextField.rx.text.orEmpty
+//            .bind(to:self.passwordBehavior)
+//            .disposed(by: disposeBag)
+//        bindResult()
+    }
+    
+    
+    private func bindInput() {
+        
+        //emailTextField Validation(length)
         self.idTextField.rx.text.orEmpty
-            .bind(to:self.emailBehavior)
+            .bind(to:emailBehavior)
             .disposed(by: disposeBag)
         
-        self.pwTextField.rx.text.orEmpty
-            .bind(to:self.passwordBehavior)
+        self.emailBehavior.map {$0.count > 0}
+            .subscribe(onNext: { [weak self] b in
+                self?.idTextField.placeholder = b ? "" : "Input Email"
+            })
             .disposed(by: disposeBag)
-        bindResult()
+
+        //passwordTextField Validation(length)
+        self.pwTextField.rx.text.orEmpty
+            .bind(to:passwordBehavior)
+            .disposed(by: disposeBag)
+        
+        self.passwordBehavior.map {$0.count > 0}
+            .subscribe(onNext: { [weak self] b in
+                self?.pwTextField.placeholder = b ? "" : "Input Password"
+            })
+            .disposed(by: disposeBag)
     }
     
-    
-    private func bindResult(){
-        Observable.combineLatest(
-            self.emailBehavior.map(checkEmail),
-            self.passwordBehavior.map(checkPassword)
-            , resultSelector: { $0 && $1})
-            .subscribe(onNext:{ result in
-                self.loginButton.isEnabled = result
-            }).disposed(by: disposeBag)
+    private func bindOutput() {
+        
+        //두개의 입력값 체크결과에 따른 동작 combineLatest
+        Observable.combineLatest(emailBehavior.map(checkEmail), passwordBehavior.map(checkPassword), resultSelector: {$0 && $1})
+            .subscribe(onNext: { [weak self] b in
+                self?.loginButton.isEnabled = b
+            })
+        .disposed(by: disposeBag)
     }
-    private func checkEmail(_ email:String) -> Bool{
-        if email.count == 0{
-            self.idTextField.placeholder = "input Email"
-        }
+
+    
+    private func checkEmail(_ email:String) -> Bool {
         return email.count > 0 && email.contains("@") && email.contains(".")
     }
     
-    private func checkPassword(_ password:String) -> Bool{
-        if password.count == 0{
-            self.pwTextField.placeholder = "input Password"
-        }
+    private func checkPassword(_ password:String) -> Bool {
         return password.count > 7
     }
 
-    @IBAction func pressLoginButton(){
+    @IBAction func pressLoginButton() {
         let viewController:UIViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "SuccessLogin") as UIViewController
         self.navigationController?.pushViewController(viewController, animated: true)
     }
