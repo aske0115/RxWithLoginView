@@ -39,11 +39,6 @@ class ViewController: BaseViewController {
     private let emailValid = BehaviorSubject(value: false)
     private let passwordValid = BehaviorSubject(value: false)
     
-//    var idFieldSubject:PublishSubject<String>?
-//    var pwFieldSubject:PublishSubject<String>?
-    
-    
-//    private var validationTextField:BehaviorSubject<Any>?
     @IBOutlet weak var idTextField:UITextField!
     @IBOutlet weak var pwTextField:UITextField!
     
@@ -52,6 +47,7 @@ class ViewController: BaseViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+    
         // Do any additional setup after loading the view, typically from a nib.
     }
 
@@ -61,19 +57,9 @@ class ViewController: BaseViewController {
     }
     
     override func bindUI() {
-        
-//        self.emailBehavior = self.idTextField.rx.text.orEmpty.asBe
-        
+
         bindInput()
         bindOutput()
-//        self.idTextField.rx.text.orEmpty
-//            .bind(to:self.emailBehavior)
-//            .disposed(by: disposeBag)
-//
-//        self.pwTextField.rx.text.orEmpty
-//            .bind(to:self.passwordBehavior)
-//            .disposed(by: disposeBag)
-//        bindResult()
     }
     
     
@@ -84,22 +70,12 @@ class ViewController: BaseViewController {
             .bind(to:emailBehavior)
             .disposed(by: disposeBag)
         
-        self.emailBehavior.map {$0.count > 0}
-            .subscribe(onNext: { [weak self] b in
-                self?.idTextField.placeholder = b ? "" : "Input Email"
-            })
-            .disposed(by: disposeBag)
 
         //passwordTextField Validation(length)
         self.pwTextField.rx.text.orEmpty
             .bind(to:passwordBehavior)
             .disposed(by: disposeBag)
-        
-        self.passwordBehavior.map {$0.count > 0}
-            .subscribe(onNext: { [weak self] b in
-                self?.pwTextField.placeholder = b ? "" : "Input Password"
-            })
-            .disposed(by: disposeBag)
+
     }
     
     private func bindOutput() {
